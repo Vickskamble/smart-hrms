@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function getRequestingUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return getRequestingUser().role == 'admin' || getRequestingUser().role == 'hr';
+    }
+
+    function isSameCompany(userData) {
+      return userData.companyId == getRequestingUser().companyId;
+    }
+
+    match /users/{userId} {
+      allow create: if request.auth != null &&
+        isAdmin() &&
+        request.resource.data.companyId == getRequestingUser().companyId;
+
+      allow read: if request.auth.uid == userId ||
+        (isAdmin() && isSameCompany(resource.data));
+
+      allow update: if request.auth.uid == userId ||
+        (isAdmin() && isSameCompany(resource.data));
+
+      allow delete: if isAdmin() && isSameCompany(resource.data);
+    }
+
+    match /companies/{companyId} {
+      allow read: if request.auth != null &&
+        (resource.data.adminIds.hasAny([request.auth.uid]) ||
+         getRequestingUser().companyId == companyId);
+
+      allow write: if request.auth != null &&
+        resource.data.adminIds.hasAny([request.auth.uid]);
+    }
+
+    match /companies/{companyId}/employees/{employeeId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == employeeId ||
+         (isAdmin() && getRequestingUser().companyId == companyId));
+
+      allow write: if request.auth != null &&
+        isAdmin() &&
+        getRequestingUser().companyId == companyId;
+    }
+
+    match /companies/{companyId}/attendance/{attendanceId} {
+      allow read, write: if request.auth != null &&
+        getRequestingUser().companyId == companyId;
+    }
+
+    match /companies/{companyId}/leaves/{leaveId} {
+      allow read, write: if request.auth != null &&
+        getRequestingUser().companyId == companyId;
+    }
+
+    match /companies/{companyId}/announcements/{announcementId} {
+      allow read: if request.auth != null &&
+        getRequestingUser().companyId == companyId;
+
+      allow write: if request.auth != null &&
+        isAdmin() &&
+        getRequestingUser().companyId == companyId;
+    }
+
+    match /companies/{companyId}/salary_slips/{slipId} {
+      allow read: if request.auth != null &&
+        (getRequestingUser().companyId == companyId ||
+         resource.data.employeeId == request.auth.uid);
+
+      allow write: if request.auth != null &&
+        isAdmin() &&
+        getRequestingUser().companyId == companyId;
+    }
+
+    match /import_logs/{logId} {
+      allow read: if request.auth != null &&
+        (resource.data.adminId == request.auth.uid ||
+         isAdmin());
+
+      allow create: if request.auth != null &&
+        isAdmin() &&
+        request.resource.data.companyId == getRequestingUser().companyId;
+    }
+  }
+}

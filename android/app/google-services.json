@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "890513393912",
+    "project_id": "elitestaff-51f88",
+    "storage_bucket": "elitestaff-51f88.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:890513393912:android:fb407d87bc11a7fef2130d",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIHElWdE5qMRbSDfIWqo2fZ4QUKvPuSoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
