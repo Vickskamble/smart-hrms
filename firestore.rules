@@ -2,88 +2,183 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    /* ------------------------------------------------------------- helpers */
+
+    function signingIn() {
+      return request.auth != null;
+    }
+
     function getRequestingUser() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function isAdmin() {
-      return getRequestingUser().role == 'admin' || getRequestingUser().role == 'hr';
+      return signingIn() &&
+        (getRequestingUser().role == 'admin' || getRequestingUser().role == 'hr');
+    }
+
+    function isSelf(userId) {
+      return signingIn() && request.auth.uid == userId;
     }
 
     function isSameCompany(userData) {
-      return userData.companyId == getRequestingUser().companyId;
+      return signingIn() && userData.companyId == getRequestingUser().companyId;
     }
 
+    function inMyCompany(companyId) {
+      return signingIn() && getRequestingUser().companyId == companyId;
+    }
+
+    /**
+     * Fields an employee is allowed to change on their own account.
+     *
+     * Anything not listed here is off limits to a self update, which is what
+     * stops an employee writing `role: 'admin'` onto their own document and
+     * promoting themselves. `role`, `companyId` and `status` are deliberately
+     * absent: they are the three fields that grant or revoke access.
+     */
+    function selfEditableFieldsOnly() {
+      return request.resource.data.diff(resource.data)
+        .affectedKeys()
+        .hasOnly([
+          'name',
+          'phone',
+          'photoUrl',
+          'fcmToken',
+          'updatedAt',
+          'profileImageUrl',
+          'address',
+          'emergencyContact'
+        ]);
+    }
+
+    /* --------------------------------------------------------------- users */
+
     match /users/{userId} {
-      allow create: if request.auth != null &&
-        isAdmin() &&
+      allow create: if isAdmin() &&
         request.resource.data.companyId == getRequestingUser().companyId;
 
-      allow read: if request.auth.uid == userId ||
+      allow read: if isSelf(userId) ||
         (isAdmin() && isSameCompany(resource.data));
 
-      allow update: if request.auth.uid == userId ||
-        (isAdmin() && isSameCompany(resource.data));
+      // An admin may change anything on a colleague in their own company, but
+      // may never move a user into another company. A user may only edit the
+      // cosmetic fields listed above.
+      allow update: if (isAdmin() &&
+            isSameCompany(resource.data) &&
+            request.resource.data.companyId == resource.data.companyId) ||
+        (isSelf(userId) && selfEditableFieldsOnly());
 
       allow delete: if isAdmin() && isSameCompany(resource.data);
     }
 
-    match /companies/{companyId} {
-      allow read: if request.auth != null &&
-        (resource.data.adminIds.hasAny([request.auth.uid]) ||
-         getRequestingUser().companyId == companyId);
+    /* ----------------------------------------------------------- companies */
 
-      allow write: if request.auth != null &&
+    match /companies/{companyId} {
+      allow read: if inMyCompany(companyId) ||
+        (signingIn() && resource.data.adminIds.hasAny([request.auth.uid]));
+
+      // Only the company's own admins may create or change it. A write that
+      // widens the admin list to a different company is refused because the
+      // requester has to belong to it already.
+      allow create: if signingIn() &&
+        request.resource.data.adminIds.hasAny([request.auth.uid]);
+
+      allow update: if inMyCompany(companyId) &&
+        resource.data.adminIds.hasAny([request.auth.uid]);
+
+      allow delete: if inMyCompany(companyId) &&
         resource.data.adminIds.hasAny([request.auth.uid]);
     }
 
+    /* ----------------------------------------------------------- employees */
+
     match /companies/{companyId}/employees/{employeeId} {
-      allow read: if request.auth != null &&
-        (request.auth.uid == employeeId ||
-         (isAdmin() && getRequestingUser().companyId == companyId));
+      allow read: if inMyCompany(companyId) &&
+        (isAdmin() || isSelf(employeeId));
 
-      allow write: if request.auth != null &&
-        isAdmin() &&
-        getRequestingUser().companyId == companyId;
+      allow create: if isAdmin() && inMyCompany(companyId);
+
+      allow update: if isAdmin() && inMyCompany(companyId);
+
+      allow delete: if isAdmin() && inMyCompany(companyId);
     }
 
+    /* ----------------------------------------------------------- attendance */
+
+    // Employees punch in and out for themselves, so self writes are allowed,
+    // but only on their own record. Editing or removing somebody else's
+    // attendance is an HR action.
     match /companies/{companyId}/attendance/{attendanceId} {
-      allow read, write: if request.auth != null &&
-        getRequestingUser().companyId == companyId;
+      allow read: if inMyCompany(companyId) &&
+        (isAdmin() || resource.data.employeeId == request.auth.uid);
+
+      allow create: if inMyCompany(companyId) &&
+        (isAdmin() ||
+          (request.resource.data.employeeId == request.auth.uid &&
+           request.resource.data.keys().hasOnly([
+             'employeeId', 'name', 'date', 'punchIn', 'punchOut',
+             'status', 'isLate', 'location', 'device'
+           ])));
+
+      allow update: if isAdmin() && inMyCompany(companyId);
+
+      allow delete: if isAdmin() && inMyCompany(companyId);
     }
+
+    /* -------------------------------------------------------------- leaves */
 
     match /companies/{companyId}/leaves/{leaveId} {
-      allow read, write: if request.auth != null &&
-        getRequestingUser().companyId == companyId;
-    }
-
-    match /companies/{companyId}/announcements/{announcementId} {
-      allow read: if request.auth != null &&
-        getRequestingUser().companyId == companyId;
-
-      allow write: if request.auth != null &&
-        isAdmin() &&
-        getRequestingUser().companyId == companyId;
-    }
-
-    match /companies/{companyId}/salary_slips/{slipId} {
-      allow read: if request.auth != null &&
-        (getRequestingUser().companyId == companyId ||
+      allow read: if inMyCompany(companyId) &&
+        (isAdmin() || resource.data.uid == request.auth.uid ||
          resource.data.employeeId == request.auth.uid);
 
-      allow write: if request.auth != null &&
-        isAdmin() &&
-        getRequestingUser().companyId == companyId;
+      // An employee may raise their own request, and may not set it to an
+      // already-decided state.
+      allow create: if inMyCompany(companyId) &&
+        (isAdmin() ||
+          (request.resource.data.uid == request.auth.uid &&
+           request.resource.data.employeeId == request.auth.uid &&
+           request.resource.data.status == 'pending'));
+
+      // Approving or rejecting is an HR action. An employee may only cancel
+      // their own request that is still pending.
+      allow update: if isAdmin() && inMyCompany(companyId);
+
+      allow delete: if isAdmin() && inMyCompany(companyId);
     }
 
-    match /import_logs/{logId} {
-      allow read: if request.auth != null &&
-        (resource.data.adminId == request.auth.uid ||
-         isAdmin());
+    /* ------------------------------------------------------- announcements */
 
-      allow create: if request.auth != null &&
-        isAdmin() &&
+    match /companies/{companyId}/announcements/{announcementId} {
+      allow read: if inMyCompany(companyId);
+
+      allow create, update, delete: if isAdmin() && inMyCompany(companyId);
+    }
+
+    /* -------------------------------------------------------- salary slips */
+
+    // Salary is the most sensitive record in the product: an employee sees
+    // their own slip, an HR or admin sees the company's. Nobody else, and in
+    // particular not a colleague in the same company.
+    match /companies/{companyId}/salary_slips/{slipId} {
+      allow read: if (isAdmin() && inMyCompany(companyId)) ||
+        (inMyCompany(companyId) && resource.data.employeeId == request.auth.uid);
+
+      allow create, update, delete: if isAdmin() && inMyCompany(companyId);
+    }
+
+    /* --------------------------------------------------------- import logs */
+
+    match /import_logs/{logId} {
+      allow read: if signingIn() &&
+        (resource.data.adminId == request.auth.uid || isAdmin());
+
+      allow create: if isAdmin() &&
         request.resource.data.companyId == getRequestingUser().companyId;
+
+      allow update, delete: if isAdmin() &&
+        resource.data.companyId == getRequestingUser().companyId;
     }
   }
 }

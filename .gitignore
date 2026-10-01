@@ -43,3 +43,28 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ----------------------------------------------------------------- secrets
+# Firebase and release signing material must never reach the repository.
+# The repo is public, so anything committed here is public too. Keep local
+# copies of these files; they are regenerated with `flutterfire configure`.
+google-services.json
+**/google-services.json
+lib/firebase_options.dart
+**/firebase_options.dart
+serviceAccountKey*.json
+*-service-account*.json
+.key
+android/key.properties
+**/key.properties
+*.jks
+*.keystore
+.env
+.env.*
+
+# Firestore rules depend on secret-ish indexes; keep local overrides out of git
+/firestore.indexes.local.json
+
+# Rules test harness
+/rules/node_modules/
+/rules/package-lock.json

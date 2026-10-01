@@ -1,0 +1,14 @@
+{
+  "name": "smart-hrms-rules-tests",
+  "private": true,
+  "description": "Emulator tests for firestore.rules. These prove the security rules actually deny what they must, which is the only way to trust them.",
+  "scripts": {
+    "rules:test": "firebase emulators:exec --only firestore --project demo-smart-hrms \"vitest run\"",
+    "rules:test:keep": "firebase emulators:exec --only firestore --project demo-smart-hrms --debug \"vitest run\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase-tools": "^13.29.1",
+    "vitest": "^2.1.8"
+  }
+}

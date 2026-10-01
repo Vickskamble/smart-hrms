@@ -17,7 +17,7 @@ A Flutter-based Human Resource Management System (HRMS) for companies that need 
 - Reports (attendance, salary, leave) and same-company directory browsing
 
 **Platform**
-- Firebase Authentication, Cloud Firestore, Cloud Storage, and (planned) Remote Config
+- Firebase Authentication and Cloud Firestore
 - Light / dark / system theme with persistence
 - Responsive UI (desktop two-panel login, mobile bottom nav, adaptive layouts)
 - Works on Android, iOS, Web, Windows, macOS, Linux
@@ -35,18 +35,45 @@ flutter analyze        # static analysis (0 issues expected)
 
 ### Firebase setup
 
-The project is wired to Firebase project `elitestaff-51f88`. `lib/firebase_options.dart`, `android/app/google-services.json`, and `firebase.json` are already generated. To point it at a different Firebase project:
+Firebase client config is **not committed to this repository**. This repo is public, so
+`lib/firebase_options.dart` and `android/app/google-services.json` are gitignored and
+must be generated locally before the app will build:
 
 ```bash
 dart pub global activate flutterfire_cli
-flutterfire configure --project=<your-firebase-project>
+flutterfire configure
 ```
 
-Deploy the security rules (already done for `elitestaff-51f88`):
+`firebase.json` is committed and pre-wired to project `elitestaff-51f88`. To point the
+app at a different project, run `flutterfire configure --project=<your-project>`.
+
+Deploy the security rules:
 
 ```bash
 firebase deploy --only firestore:rules
 ```
+
+### Security rules
+
+`firestore.rules` is the only thing standing between a signed-in employee and the rest of
+the company's data. It is covered by an emulator test suite, and **the rules must be
+re-verified whenever they change**:
+
+```bash
+cd rules
+npm install
+npm run rules:test      # 30 tests against the Firestore emulator
+```
+
+To check a candidate rules file without touching the deployed one:
+
+```bash
+RULES_PATH=../firestore.rules.candidate npm run rules:test
+```
+
+The suite covers self-role promotion, cross-company user moves, salary-slip visibility,
+leave self-approval, attendance tampering on other people's records, and unauthenticated
+access. Any test added here should be paired with the rule change it justifies.
 
 ### Builds
 
@@ -58,7 +85,9 @@ flutter build windows         # Windows desktop (requires Visual Studio C++ work
 
 ### Seed data
 
-`lib/seed_main.dart` (`flutter run -t lib/seed_main.dart`) seeds a demo company, admin, and employees via `lib/services/database_seeder.dart`.
+`lib/seed_main.dart` (`flutter run -t lib/seed_main.dart`) seeds a demo company, admin, and
+employees via `lib/services/database_seeder.dart`. It writes demo records to the configured
+Firebase project — do not point it at production.
 
 ## Project Structure
 
@@ -73,6 +102,7 @@ lib/
 ├── services/        database seeder
 ├── utility/         file parser (Excel/CSV), helpers
 └── widgets/         shared/common widgets
+rules/               Firestore emulator tests for firestore.rules
 ```
 
 ## Repository
