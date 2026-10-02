@@ -18,11 +18,14 @@ dependencies:
 
   # App Packages
   shared_preferences: ^2.2.2
-  pdf: ^3.10.7
+  # pdf 3.13 pulls in xml 7, which excel 4.0.6 caps below 7. Revisit together.
+  pdf: ^3.12.0
+  # pdf 3.13 / printing 5.15 pull in xml 7, which excel 4.0.6 caps below 7.
+  # Revisit all three together.
   printing: ^5.12.0
-  intl: ^0.20.2
+  intl: ^0.20.3
   provider: ^6.0.5
-  google_fonts: ^6.0.0
+  google_fonts: ^8.2.1
   flutter_svg: ^2.0.10
   lucide_icons: 0.257.0
   fl_chart: ^0.68.0
