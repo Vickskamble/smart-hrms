@@ -111,7 +111,7 @@ class ImportService {
     for (final field in requiredFields) {
       final value = row[field];
       if (value == null || value.toString().trim().isEmpty) {
-        errors.add('Missing required field: \$field');
+        errors.add('Missing required field: $field');
       }
     }
 

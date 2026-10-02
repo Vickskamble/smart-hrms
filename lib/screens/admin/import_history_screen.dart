@@ -75,7 +75,7 @@ class _ImportHistoryScreenState extends State<ImportHistoryScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      SnackBarUtils.showError(context, 'Failed to load import history: \${e.toString()}');
+      SnackBarUtils.showError(context, 'Failed to load import history: ${e.toString()}');
     }
   }
 
@@ -374,7 +374,7 @@ class _ImportHistoryScreenState extends State<ImportHistoryScreen> {
       dateTime = timestamp as DateTime;
     }
 
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} \${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   void _showImportDetails(Map<String, dynamic> log) {

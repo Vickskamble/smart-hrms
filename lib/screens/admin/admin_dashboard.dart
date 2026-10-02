@@ -52,7 +52,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       setState(() => _loading = false);
       SnackBarUtils.showError(
         context,
-        'Failed to load dashboard: \${e.toString()}',
+        'Failed to load dashboard: ${e.toString()}',
       );
     }
   }
@@ -374,9 +374,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Text(
-              'Error loading employees: \${snapshot.error}',
-              style: TextStyle(color: AppColors.textPrimary),
+            child: Text(
+              'Error loading employees: ${snapshot.error}',
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
           );
         }
@@ -529,9 +529,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Text(
-              'Error loading departments: \${snapshot.error}',
-              style: TextStyle(color: AppColors.textPrimary),
+            child: Text(
+              'Error loading departments: ${snapshot.error}',
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
           );
         }
@@ -646,7 +646,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$percentage%',
+                '$percentage%',
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.bold,

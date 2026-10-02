@@ -24,7 +24,7 @@ class FileParser {
         throw Exception('Unsupported file format');
       }
     } catch (e) {
-      throw Exception('Failed to parse file: \${e.toString()}');
+      throw Exception('Failed to parse file: ${e.toString()}');
     }
   }
 
@@ -130,7 +130,7 @@ class FileParser {
       return columnNames[columnIndex];
     }
 
-    return 'column_\${columnIndex + 1}';
+    return 'column_${columnIndex + 1}';
   }
 
   static List<String> _getExcelHeaders(Sheet sheet) {

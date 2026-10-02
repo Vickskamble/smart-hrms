@@ -398,7 +398,7 @@ class _ImportDashboardState extends State<ImportDashboard> {
       if (!mounted) return;
 
       setState(() {
-        _selectedFileName = 'employees_template.\${_selectedFileExtension}';
+        _selectedFileName = 'employees_template.$_selectedFileExtension';
         _isLoading = false;
       });
 
@@ -414,7 +414,7 @@ class _ImportDashboardState extends State<ImportDashboard> {
       );
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Failed to select file: \${e.toString()}');
+      _showError('Failed to select file: ${e.toString()}');
     }
   }
 

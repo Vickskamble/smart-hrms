@@ -65,7 +65,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
       _validatePreviewData(companyId);
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Failed to load preview: \${e.toString()}');
+      _showError('Failed to load preview: ${e.toString()}');
     }
   }
 
@@ -82,7 +82,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Validation failed: \${e.toString()}');
+      _showError('Validation failed: ${e.toString()}');
     }
   }
 
@@ -477,7 +477,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Import failed: \${e.toString()}');
+      _showError('Import failed: ${e.toString()}');
     }
   }
 }

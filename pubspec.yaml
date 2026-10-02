@@ -29,10 +29,12 @@ dependencies:
   flutter_svg: ^2.0.10
   lucide_icons: 0.257.0
   fl_chart: ^0.68.0
-  geolocator: ^10.0.0
+  geolocator: ^14.1.1
 
   # Import packages
-  file_picker: ^8.0.0
+  # file_picker was removed: nothing in lib/ imported it, and it pinned win32 5,
+  # which blocked the geolocator 14 upgrade. The import screen is still a stub
+  # (import_dashboard.dart simulates file selection) - see README.
   excel: ^4.0.6
 
 dev_dependencies:
