@@ -12,30 +12,31 @@ dependencies:
     sdk: flutter
 
   # Firebase Packages
-  firebase_core: ^3.6.0
-  cloud_firestore: ^5.4.4
-  firebase_auth: ^5.3.1
+  firebase_core: ^4.15.0
+  cloud_firestore: ^6.10.0
+  firebase_auth: ^6.7.0
 
   # App Packages
   shared_preferences: ^2.2.2
+  provider: ^6.0.5
+  intl: ^0.20.3
+  geolocator: ^14.1.1
   # pdf 3.13 pulls in xml 7, which excel 4.0.6 caps below 7. Revisit together.
   pdf: ^3.12.0
-  # pdf 3.13 / printing 5.15 pull in xml 7, which excel 4.0.6 caps below 7.
-  # Revisit all three together.
-  printing: ^5.12.0
-  intl: ^0.20.3
-  provider: ^6.0.5
-  google_fonts: ^8.2.1
-  flutter_svg: ^2.0.10
-  lucide_icons: 0.257.0
-  fl_chart: ^0.68.0
-  geolocator: ^14.1.1
 
-  # Import packages
-  # file_picker was removed: nothing in lib/ imported it, and it pinned win32 5,
-  # which blocked the geolocator 14 upgrade. The import screen is still a stub
-  # (import_dashboard.dart simulates file selection) - see README.
+# Import packages
+  # file_picker is back at ^13 - the earlier 8.x pin conflicted on win32 and had
+  # to go before geolocator could move to 14. Version 13 is required because
+  # 8.x-12.x depend on win32 5 and geolocator 14 needs win32 6.
+  file_picker: ^13.1.0
   excel: ^4.0.6
+
+# Removed as unused - none of them were imported anywhere in lib/:
+#   firebase_storage, fl_chart, flutter_svg, lucide_icons, google_fonts,
+#   printing
+# Icons are all Material Icons.*; the dashboard "charts" are hand-rolled
+# progress bars, not fl_chart widgets. PDF bytes are produced by ReportPdfService
+# but nothing yet prints, saves or shares them.
 
 dev_dependencies:
   flutter_test:

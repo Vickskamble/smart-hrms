@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/core.dart';
@@ -384,35 +387,59 @@ class _ImportDashboardState extends State<ImportDashboard> {
   }
 
   Future<void> _pickFile() async {
-    if (_selectedFileExtension == null) {
+    final extension = _selectedFileExtension;
+    if (extension == null) {
       _showError('Please select a file type first');
       return;
     }
 
-    // In a real app, this would open a file picker
-    // For now, we'll simulate file selection
     setState(() => _isLoading = true);
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final picked = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: [extension],
+      );
+
       if (!mounted) return;
 
+      // The picker returns null when the dialog is dismissed.
+      if (picked == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final path = picked.path;
+      if (path == null) {
+        setState(() => _isLoading = false);
+        _showError('Could not read the selected file');
+        return;
+      }
+
       setState(() {
-        _selectedFileName = 'employees_template.$_selectedFileExtension';
+        _selectedFileName = picked.name;
         _isLoading = false;
       });
 
-      // Navigate to preview screen
-      Navigator.pushNamed(
+      // FileParser works off a dart:io File, so this flow is available on the
+      // platforms that have one and not on web.
+      await Navigator.pushNamed(
         context,
         '/import-preview',
         arguments: {
-          'fileName': _selectedFileName,
-          'fileExtension': _selectedFileExtension,
-          'file': null, // In real app, this would be the actual file
+          'fileName': picked.name,
+          'fileExtension': extension,
+          'file': File(path),
         },
       );
+
+      if (!mounted) return;
+      setState(() {
+        _selectedFileName = null;
+        _selectedFileExtension = null;
+      });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       _showError('Failed to select file: ${e.toString()}');
     }

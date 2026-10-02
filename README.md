@@ -5,7 +5,7 @@ A Flutter-based Human Resource Management System (HRMS) for companies that need 
 ## Features
 
 **Admin / HR**
-- Dashboard with live stats (total staff, present, on leave, departments) and charts
+- Dashboard with live stats (total staff, present, on leave, departments) and per-department share bars
 - Employee management (add, edit, reset credentials, activate/deactivate)
 - Bulk import of employees from Excel (`.xlsx`) / CSV with validation, preview, batching, and import history
 - Leave request approval flow
@@ -20,7 +20,22 @@ A Flutter-based Human Resource Management System (HRMS) for companies that need 
 - Firebase Authentication and Cloud Firestore
 - Light / dark / system theme with persistence
 - Responsive UI (desktop two-panel login, mobile bottom nav, adaptive layouts)
-- Works on Android, iOS, Web, Windows, macOS, Linux
+- Works on Android, iOS, Windows, macOS, Linux
+
+## Known gaps
+
+Two things are built further than they work end to end. Both are worth knowing
+about before you rely on them.
+
+- **Bulk import is desktop and mobile only.** `FileParser` reads a `dart:io`
+  `File`, which the web build does not have, so the import flow is not
+  available on web. Every other feature above works on web.
+- **PDFs are generated but never delivered.** `ReportPdfService` produces valid
+  PDFs and the screens wire it to the buttons, but `_downloadReport` only logs
+  the byte count. Nothing prints, saves or shares the file yet, so the salary
+  slip, attendance and leave "report" buttons currently do nothing visible for
+  the user. Adding `printing` back and calling `Printing.sharePdf` is the
+  missing piece.
 
 ## Getting Started
 
